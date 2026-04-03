@@ -6,590 +6,147 @@
     <title>Générateur d'imports Odoo - Packing List Wala</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 0;
-            background: white;
-            border-radius: 15px 15px 0 0;
-            padding: 20px 20px 0 20px;
-        }
-
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .tabs { display: flex; gap: 10px; background: white; border-radius: 15px 15px 0 0; padding: 20px 20px 0 20px; }
         .tab {
-            flex: 1;
-            padding: 15px;
-            background: #f8f9fa;
-            border: none;
-            border-radius: 10px 10px 0 0;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            transition: all 0.3s;
-            color: #666;
-            position: relative;
+            flex: 1; padding: 15px; background: #f8f9fa; border: none;
+            border-radius: 10px 10px 0 0; cursor: pointer; font-weight: 600;
+            transition: all 0.3s; color: #666; position: relative;
         }
-
-        .tab:hover {
-            background: #e9ecef;
-        }
-
-        .tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .tab.completed::after {
-            content: "✓";
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            color: #28a745;
-            font-size: 1.2em;
-        }
-
-        .tab.active.completed::after {
-            color: white;
-        }
-
-        .card {
-            background: white;
-            border-radius: 0 0 15px 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 40px;
-            margin-bottom: 20px;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .step-indicator {
-            background: #e7f3ff;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border-left: 4px solid #667eea;
-        }
-
-        .step-indicator h3 {
-            color: #667eea;
-            margin-bottom: 8px;
-        }
-
-        .step-indicator p {
-            color: #555;
-            line-height: 1.6;
-        }
-
-        .upload-section {
-            margin-bottom: 30px;
-        }
-
-        .upload-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-            display: flex;
-            align-items: center;
-        }
-
-        .upload-section h2::before {
-            content: "📁";
-            margin-right: 10px;
-            font-size: 1.2em;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            margin-bottom: 15px;
-        }
-
-        .file-input-wrapper input[type="file"] {
-            display: none;
-        }
-
+        .tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .tab.completed::after { content: "✓"; position: absolute; top: 5px; right: 10px; color: #28a745; }
+        .tab.active.completed::after { color: white; }
+        .card { background: white; border-radius: 0 0 15px 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); padding: 40px; margin-bottom: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .step-indicator { background: #e7f3ff; padding: 15px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #667eea; }
+        .upload-section h2 { color: #333; margin-bottom: 20px; font-size: 1.3em; }
+        .file-input-wrapper { margin-bottom: 15px; }
+        .file-input-wrapper input { display: none; }
         .file-input-label {
-            display: block;
-            padding: 20px;
-            background: #f8f9fa;
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
+            display: block; padding: 20px; background: #f8f9fa; border: 2px dashed #ddd;
+            border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.3s;
         }
-
-        .file-input-label:hover {
-            background: #e9ecef;
-            border-color: #667eea;
-        }
-
-        .file-input-label.has-file {
-            background: #e7f3ff;
-            border-color: #667eea;
-            border-style: solid;
-        }
-
-        .file-name {
-            color: #667eea;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            color: #555;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
+        .file-input-label:hover, .file-input-label.has-file { background: #e7f3ff; border-color: #667eea; }
+        .file-name { color: #667eea; font-weight: 600; margin-top: 8px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        .input-group input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; }
         .generate-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.2em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 20px;
+            width: 100%; padding: 18px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 10px; font-size: 1.2em; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; margin-top: 20px;
         }
-
-        .generate-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .generate-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            display: none;
-        }
-
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .download-section {
-            margin-top: 30px;
-            display: none;
-        }
-
-        .download-section h3 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
+        .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .status { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
         .download-btn {
-            display: block;
-            padding: 15px 25px;
-            background: #28a745;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            text-align: center;
-            font-weight: 600;
-            transition: all 0.3s;
+            display: block; padding: 15px; background: #28a745; color: white;
+            text-decoration: none; border-radius: 8px; margin-bottom: 10px;
+            text-align: center; font-weight: 600;
         }
-
-        .download-btn:hover {
-            background: #218838;
-            transform: translateX(5px);
-        }
-
-        .download-btn::before {
-            content: "⬇️ ";
-            margin-right: 8px;
-        }
-
-        .info-box {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-            border-left: 4px solid #667eea;
-        }
-
-        .info-box h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .info-box ul {
-            list-style-position: inside;
-            color: #555;
-            line-height: 1.8;
-        }
-
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .footer {
-            text-align: center;
-            color: white;
-            margin-top: 30px;
-            opacity: 0.8;
-        }
-
-        .warning-box {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-            display: none;
-        }
-
-        .warning-box.show {
-            display: block;
-        }
-
-        .warning-box h3 {
-            color: #856404;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .warning-box h3::before {
-            content: "⚠️";
-            margin-right: 10px;
-            font-size: 1.3em;
-        }
-
-        .warning-box ul {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0;
-            max-height: 200px;
-            overflow-y: auto;
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-        }
-
-        .warning-box li {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            color: #856404;
-            font-family: monospace;
-        }
-
-        .warning-box li:last-child {
-            border-bottom: none;
-        }
-
-        .stats-box {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .stat-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-item.success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-        }
-
-        .stat-item.warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-        }
-
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .download-missing {
-            background: #ffc107 !important;
-            color: #000 !important;
-            font-weight: bold;
-        }
-
-        .download-missing:hover {
-            background: #e0a800 !important;
-        }
-
-        .download-missing::before {
-            content: "📋 ";
-        }
+        .warning-box { background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin: 20px 0; display: none; }
+        .stats-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .stat-item { padding: 15px; border-radius: 8px; text-align: center; background: #f8f9fa; }
+        .stat-number { font-size: 2em; font-weight: bold; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🚀 Générateur d'imports Odoo</h1>
-            <p>Transformez votre packing list Wala en fichiers d'import Odoo</p>
+            <p>WALA Packing List vers Odoo</p>
         </div>
 
         <div class="tabs">
-            <button class="tab active" data-tab="step1">
-                📁 Étape 1<br><small>Charger les fichiers</small>
-            </button>
-            <button class="tab" data-tab="step2">
-                📋 Étape 2<br><small>CDE + LOT</small>
-            </button>
-            <button class="tab" data-tab="step3">
-                ✅ Étape 3<br><small>Réception</small>
-            </button>
+            <button class="tab active" data-tab="step1">📁 Étape 1<br><small>Fichiers</small></button>
+            <button class="tab" data-tab="step2">📋 Étape 2<br><small>CDE + LOT</small></button>
+            <button class="tab" data-tab="step3">✅ Étape 3<br><small>Réception</small></button>
         </div>
 
         <div class="card">
-            <!-- ÉTAPE 1 : Chargement des fichiers -->
             <div id="step1" class="tab-content active">
                 <div class="step-indicator">
-                    <h3>📁 Étape 1 : Chargez vos fichiers source</h3>
-                    <p>Uploadez la packing list Wala et votre base articles Odoo</p>
+                    <h3>📁 Chargement des sources</h3>
+                    <p>Déposez la Packing List et l'export Articles Odoo.</p>
                 </div>
-
-                <div class="upload-section">
-                    <h2>Fichiers nécessaires</h2>
-                    
-                    <div class="file-input-wrapper">
-                        <input type="file" id="packingListFile" accept=".xlsx,.xls">
-                        <label for="packingListFile" class="file-input-label" id="packingListLabel">
-                            <div>📦 Packing List Wala (Excel)</div>
-                            <small style="color: #666; margin-top: 5px; display: block;">Fichier reçu de votre fournisseur</small>
-                            <div class="file-name" id="packingListName"></div>
-                        </label>
-                    </div>
-
-                    <div class="file-input-wrapper">
-                        <input type="file" id="baseArticlesFile" accept=".xlsx,.xls">
-                        <label for="baseArticlesFile" class="file-input-label" id="baseArticlesLabel">
-                            <div>📋 Base Articles (Export Odoo)</div>
-                            <small style="color: #666; margin-top: 5px; display: block;">Export de vos produits depuis Odoo</small>
-                            <div class="file-name" id="baseArticlesName"></div>
-                        </label>
-                    </div>
+                <div class="file-input-wrapper">
+                    <input type="file" id="packingListFile" accept=".xlsx,.xls">
+                    <label for="packingListFile" class="file-input-label" id="packingListLabel">
+                        <div>📦 Packing List Wala (Excel)</div>
+                        <div class="file-name" id="packingListName"></div>
+                    </label>
                 </div>
-
+                <div class="file-input-wrapper">
+                    <input type="file" id="baseArticlesFile" accept=".xlsx,.xls">
+                    <label for="baseArticlesFile" class="file-input-label" id="baseArticlesLabel">
+                        <div>📋 Base Articles (Export Odoo)</div>
+                        <div class="file-name" id="baseArticlesName"></div>
+                    </label>
+                </div>
                 <div class="input-group">
-                    <label for="fournisseur">Nom du fournisseur</label>
-                    <input type="text" id="fournisseur" value="WALA Heilmittel GmbH" placeholder="Ex: WALA Heilmittel GmbH">
+                    <label>Nom du fournisseur</label>
+                    <input type="text" id="fournisseur" value="WALA Heilmittel GmbH">
                 </div>
-
-                <button class="generate-btn" id="nextStep1" disabled>
-                    Continuer vers l'étape 2 →
-                </button>
-
+                <button class="generate-btn" id="nextStep1" disabled>Continuer →</button>
                 <div class="status" id="status1"></div>
             </div>
 
-            <!-- ÉTAPE 2 : Génération CDE + LOT -->
             <div id="step2" class="tab-content">
-                <div class="step-indicator">
-                    <h3>📋 Étape 2 : Générez les fichiers CDE et LOT</h3>
-                    <p>Ces fichiers sont nécessaires pour créer la commande et les lots dans Odoo</p>
-                </div>
-
-                <div class="info-box" style="margin-bottom: 20px;">
-                    <h3>ℹ️ Que faire ensuite ?</h3>
-                    <ul>
-                        <li><strong>1.</strong> Téléchargez les fichiers CDE et LOT ci-dessous</li>
-                        <li><strong>2.</strong> Importez-les dans Odoo dans cet ordre : CDE puis LOT</li>
-                        <li><strong>3.</strong> Odoo va créer une réception et générer un ID</li>
-                        <li><strong>4.</strong> Récupérez cet ID de réception dans Odoo</li>
-                        <li><strong>5.</strong> Passez à l'étape 3 pour générer le fichier de réception</li>
-                    </ul>
-                </div>
-
-                <button class="generate-btn" id="generateStep2" style="background: #28a745;">
-                    📥 Générer CDE + LOT
-                </button>
-
+                <div class="step-indicator"><h3>📋 Génération CDE et LOT</h3></div>
+                <button class="generate-btn" id="generateStep2" style="background: #28a745;">📥 Générer les fichiers</button>
                 <div class="loader" id="loader2"></div>
                 <div class="status" id="status2"></div>
-
-                <!-- Section d'alerte pour articles manquants -->
-                <div class="warning-box" id="warningBox">
-                    <h3>Articles non trouvés dans la base</h3>
-                    <p>Les articles suivants de la packing list ne sont pas dans votre base Odoo :</p>
-                    <ul id="missingArticlesList"></ul>
-                    <p style="margin-top: 15px; color: #856404;">
-                        ⚠️ Ces articles ne seront <strong>pas inclus</strong> dans les fichiers CDE et LOT.<br>
-                        📥 Téléchargez le fichier ci-dessous (format packing list) pour créer ces articles dans Odoo.<br>
-                        ♻️ Une fois créés, rechargez ce fichier comme packing list avec votre nouvelle base articles.
-                    </p>
-                </div>
-
-                <!-- Stats -->
+                
                 <div class="stats-box" id="statsBox" style="display: none;">
-                    <div class="stat-item success">
+                    <div class="stat-item" style="background: #d4edda;">
                         <div class="stat-number" id="matchedCount">0</div>
-                        <div class="stat-label">Articles traités ✓</div>
+                        <div>Articles OK</div>
                     </div>
-                    <div class="stat-item warning">
+                    <div class="stat-item" style="background: #f8d7da;">
                         <div class="stat-number" id="missingCount">0</div>
-                        <div class="stat-label">Articles manquants ⚠️</div>
+                        <div>Manquants</div>
                     </div>
                 </div>
 
-                <div class="download-section" id="downloadSection2">
-                    <h3>✅ Fichiers générés !</h3>
-                    <a href="#" class="download-btn" id="downloadCDE">Fichier Commande (CDE)</a>
-                    <a href="#" class="download-btn" id="downloadLOT">Fichier Lots (LOT)</a>
-                    <a href="#" class="download-btn download-missing" id="downloadMissing" style="display: none;">
-                        Packing List - Articles manquants (à re-traiter)
-                    </a>
-                    
-                    <button class="generate-btn" id="nextStep2" style="margin-top: 20px;">
-                        Continuer vers l'étape 3 →
-                    </button>
+                <div class="warning-box" id="warningBox">
+                    <h3>⚠️ Articles manquants</h3>
+                    <ul id="missingArticlesList" style="margin: 10px 0; max-height: 150px; overflow-y: auto; font-family: monospace;"></ul>
+                </div>
+
+                <div id="downloadSection2" style="display: none; margin-top: 20px;">
+                    <a href="#" class="download-btn" id="downloadCDE">Télécharger CDE</a>
+                    <a href="#" class="download-btn" id="downloadLOT">Télécharger LOT</a>
+                    <button class="generate-btn" id="nextStep2">Passer à la Réception →</button>
                 </div>
             </div>
 
-            <!-- ÉTAPE 3 : Génération Réception -->
             <div id="step3" class="tab-content">
-                <div class="step-indicator">
-                    <h3>✅ Étape 3 : Générez le fichier de Réception</h3>
-                    <p>Utilisez l'ID de réception généré par Odoo après l'import des fichiers CDE et LOT</p>
-                </div>
-
-                <div class="info-box" style="margin-bottom: 20px; background: #fff3cd; border-left-color: #ffc107;">
-                    <h3>⚠️ Important</h3>
-                    <ul>
-                        <li>Vous devez d'abord avoir importé les fichiers CDE et LOT dans Odoo</li>
-                        <li>Récupérez l'ID de réception depuis Odoo (commence généralement par "__export__.stock_picking_")</li>
-                        <li>L'ID se trouve dans l'export de la réception créée automatiquement</li>
-                    </ul>
-                </div>
-
+                <div class="step-indicator"><h3>✅ Finalisation Réception</h3></div>
                 <div class="input-group">
-                    <label for="receptionId">ID de réception Odoo</label>
-                    <input type="text" id="receptionId" placeholder="Ex: __export__.stock_picking_69144_4c856bd4">
-                    <small style="color: #666; margin-top: 5px; display: block;">
-                        Copiez-collez l'ID exacte depuis Odoo
-                    </small>
+                    <label>ID de réception Odoo (ex: __export__.stock_picking_xxx)</label>
+                    <input type="text" id="receptionId" placeholder="Collez l'ID ici...">
                 </div>
-
-                <button class="generate-btn" id="generateStep3" disabled style="background: #28a745;">
-                    📥 Générer le fichier de Réception
-                </button>
-
+                <button class="generate-btn" id="generateStep3" disabled style="background: #28a745;">📥 Générer le fichier Réception</button>
                 <div class="loader" id="loader3"></div>
                 <div class="status" id="status3"></div>
-
-                <div class="download-section" id="downloadSection3">
-                    <h3>✅ Fichier de réception généré !</h3>
-                    <a href="#" class="download-btn" id="downloadRECEPTION">Fichier Réception</a>
-                    
-                    <div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 8px; color: #155724;">
-                        <strong>🎉 Terminé !</strong> Vous pouvez maintenant importer ce fichier dans Odoo.
-                    </div>
+                <div id="downloadSection3" style="display: none; margin-top: 20px;">
+                    <a href="#" class="download-btn" id="downloadRECEPTION">Télécharger Réception</a>
                 </div>
             </div>
-        </div>
-
-        <div class="footer">
-            <p>Fait avec ❤️ pour automatiser vos imports Odoo</p>
         </div>
     </div>
 
@@ -597,433 +154,156 @@
         let packingListData = null;
         let baseArticlesData = null;
         let articleMapping = {};
-        let fournisseur = '';
         let generatedFiles = {};
 
-        // Gestion des onglets
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const targetTab = this.dataset.tab;
-                switchTab(targetTab);
-            });
-        });
-
-        function switchTab(tabId) {
-            // Désactiver tous les onglets et contenus
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            // Activer l'onglet et le contenu sélectionné
-            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+        // --- HELPERS ---
+        function getCellValue(row, searchTerms) {
+            const keys = Object.keys(row);
+            const key = keys.find(k => searchTerms.some(term => k.toLowerCase().includes(term.toLowerCase())));
+            return key ? row[key] : null;
         }
 
-        // Gestion des uploads de fichiers
-        document.getElementById('packingListFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('packingListName').textContent = file.name;
-                document.getElementById('packingListLabel').classList.add('has-file');
-                loadExcelFile(file, 'packingList');
-            }
-        });
+        function parseExcelDate(val) {
+            if (!val) return "";
+            if (typeof val === 'number') return new Date((val - 25569) * 86400 * 1000).toISOString().split('T')[0];
+            return String(val);
+        }
 
-        document.getElementById('baseArticlesFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('baseArticlesName').textContent = file.name;
-                document.getElementById('baseArticlesLabel').classList.add('has-file');
-                loadExcelFile(file, 'baseArticles');
-            }
-        });
+        function showStatus(msg, type, id) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.className = 'status ' + type;
+            el.style.display = 'block';
+        }
 
-        function loadExcelFile(file, type) {
+        // --- LOGIQUE FICHIERS ---
+        function handleFile(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById(type + 'Name').textContent = file.name;
+            document.getElementById(type + 'Label').classList.add('has-file');
+
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            reader.onload = (evt) => {
+                const wb = XLSX.read(evt.target.result, {type: 'array'});
+                const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                if (type === 'packingList') packingListData = data;
+                else baseArticlesData = data;
                 
-                if (type === 'packingList') {
-                    packingListData = jsonData;
-                    showStatus('Packing list chargée avec succès ✓', 'success', 'status1');
-                } else if (type === 'baseArticles') {
-                    baseArticlesData = jsonData;
-                    showStatus('Base articles chargée avec succès ✓', 'success', 'status1');
-                }
-                
-                checkIfReadyForStep2();
+                if (packingListData && baseArticlesData) document.getElementById('nextStep1').disabled = false;
             };
             reader.readAsArrayBuffer(file);
         }
 
-        function checkIfReadyForStep2() {
-            const btn = document.getElementById('nextStep1');
-            const fournisseurInput = document.getElementById('fournisseur');
-            
-            if (packingListData && baseArticlesData && fournisseurInput.value.trim()) {
-                btn.disabled = false;
-            }
+        document.getElementById('packingListFile').addEventListener('change', e => handleFile(e, 'packingList'));
+        document.getElementById('baseArticlesFile').addEventListener('change', e => handleFile(e, 'baseArticles'));
+
+        // --- NAVIGATION ---
+        function switchTab(id) {
+            document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+            document.getElementById(id).classList.add('active');
         }
 
-        document.getElementById('fournisseur').addEventListener('input', checkIfReadyForStep2);
-
-        // Bouton étape 1 → étape 2
-        document.getElementById('nextStep1').addEventListener('click', function() {
-            fournisseur = document.getElementById('fournisseur').value;
-            
-            // Créer le mapping
+        document.getElementById('nextStep1').addEventListener('click', () => {
+            // Création du mapping
             articleMapping = {};
             baseArticlesData.forEach(row => {
-                const codeFournisseur = row['Code produit fournisseur'];
-                const refInterne = row['Référence interne'];
-                if (codeFournisseur && refInterne) {
-                    articleMapping[codeFournisseur] = refInterne;
-                }
+                const refInterne = getCellValue(row, ['Référence interne', 'Internal Reference']);
+                const refFourn = getCellValue(row, ['Code produit fournisseur', 'Vendor Product Code']);
+                if (refFourn && refInterne) articleMapping[String(refFourn).trim()] = refInterne;
             });
-
-            // Marquer l'étape 1 comme complétée
             document.querySelector('[data-tab="step1"]').classList.add('completed');
-            
-            // Passer à l'étape 2
             switchTab('step2');
         });
 
-        // Génération CDE + LOT (Étape 2)
-        document.getElementById('generateStep2').addEventListener('click', function() {
+        // --- GÉNÉRATION ---
+        document.getElementById('generateStep2').addEventListener('click', () => {
             document.getElementById('loader2').style.display = 'block';
-            showStatus('Génération des fichiers CDE et LOT...', 'info', 'status2');
+            const matched = [], missing = [];
+            
+            packingListData.forEach(row => {
+                const artId = String(getCellValue(row, ['Article-No', 'Product Code']) || '').trim();
+                if (articleMapping[artId]) matched.push(row);
+                else if (artId) missing.push(row);
+            });
 
-            setTimeout(() => {
-                try {
-                    // Analyser les articles et trouver les manquants
-                    const analysisResult = analyzeArticles(packingListData, articleMapping);
-                    
-                    const cdeData = generateCDE(analysisResult.matched, articleMapping, fournisseur);
-                    const lotData = generateLOT(analysisResult.matched, articleMapping);
+            // Affichage stats
+            document.getElementById('statsBox').style.display = 'grid';
+            document.getElementById('matchedCount').textContent = matched.length;
+            document.getElementById('missingCount').textContent = missing.length;
 
-                    generatedFiles.cde = createExcelFile(cdeData, 'CDE');
-                    generatedFiles.lot = createExcelFile(lotData, 'LOT');
+            if (missing.length > 0) {
+                const list = document.getElementById('missingArticlesList');
+                list.innerHTML = missing.map(m => `<li>${getCellValue(m, ['Article-No'])} - ${getCellValue(m, ['Description'])}</li>`).join('');
+                document.getElementById('warningBox').style.display = 'block';
+            }
 
-                    // Afficher les stats
-                    document.getElementById('statsBox').style.display = 'grid';
-                    document.getElementById('matchedCount').textContent = analysisResult.matched.length;
-                    document.getElementById('missingCount').textContent = analysisResult.missing.length;
+            // Génération Excel
+            const fournisseur = document.getElementById('fournisseur').value;
+            const cde = matched.map((m, i) => ({
+                'Fournisseur': i === 0 ? fournisseur : '',
+                'Article': articleMapping[String(getCellValue(m, ['Article-No'])).trim()],
+                'Quantité': getCellValue(m, ['Quantity', 'Qty']),
+                'Prix': getCellValue(m, ['Price Net', 'Price'])
+            }));
 
-                    // Gérer les articles manquants
-                    if (analysisResult.missing.length > 0) {
-                        displayMissingArticles(analysisResult.missing);
-                        
-                        // Créer le fichier des articles manquants
-                        const missingData = generateMissingArticlesFile(analysisResult.missing);
-                        generatedFiles.missing = createExcelFile(missingData, 'Articles_Manquants');
-                        
-                        document.getElementById('downloadMissing').style.display = 'block';
-                        setupDownloadMissing();
-                    } else {
-                        document.getElementById('warningBox').classList.remove('show');
-                    }
+            const lot = matched.map(m => {
+                const art = articleMapping[String(getCellValue(m, ['Article-No'])).trim()];
+                const batch = getCellValue(m, ['Batch', 'Lot']);
+                return {
+                    'ID': `import_${art}_${batch}`,
+                    'Article': art,
+                    'Numéro de lot': batch,
+                    'Date d\'expiration': parseExcelDate(getCellValue(m, ['Expiry', 'Date']))
+                };
+            });
 
-                    document.getElementById('loader2').style.display = 'none';
-                    
-                    if (analysisResult.missing.length > 0) {
-                        showStatus(`Fichiers générés ! ${analysisResult.matched.length} articles traités, ${analysisResult.missing.length} manquants ⚠️`, 'success', 'status2');
-                    } else {
-                        showStatus(`Fichiers générés avec succès ! Tous les articles ont été trouvés ✓`, 'success', 'status2');
-                    }
-                    
-                    document.getElementById('downloadSection2').style.display = 'block';
-
-                    setupDownloadCDE();
-                    setupDownloadLOT();
-
-                } catch (error) {
-                    document.getElementById('loader2').style.display = 'none';
-                    showStatus('Erreur lors de la génération : ' + error.message, 'error', 'status2');
-                    console.error(error);
-                }
-            }, 500);
+            setupDownload('downloadCDE', cde, 'Import_CDE.xlsx');
+            setupDownload('downloadLOT', lot, 'Import_LOTS.xlsx');
+            
+            document.getElementById('loader2').style.display = 'none';
+            document.getElementById('downloadSection2').style.display = 'block';
+            showStatus('Fichiers prêts !', 'success', 'status2');
         });
 
-        function analyzeArticles(packingList, mapping) {
-            const matched = [];
-            const missing = [];
-
-            packingList.forEach(row => {
-                const articleFournisseur = String(row['Article-No.']);
-                const articleInterne = mapping[articleFournisseur];
-                
-                if (articleInterne) {
-                    matched.push(row);
-                } else {
-                    missing.push(row);
-                }
-            });
-
-            return { matched, missing };
-        }
-
-        function displayMissingArticles(missingArticles) {
-            const warningBox = document.getElementById('warningBox');
-            const listElement = document.getElementById('missingArticlesList');
-            
-            listElement.innerHTML = '';
-            
-            missingArticles.forEach(article => {
-                const li = document.createElement('li');
-                li.textContent = `${article['Article-No.']} - ${article['Description']} (Quantité: ${article['Quantity']})`;
-                listElement.appendChild(li);
-            });
-            
-            warningBox.classList.add('show');
-        }
-
-        function generateMissingArticlesFile(missingArticles) {
-            const rows = [];
-            
-            // Générer au format packing list identique
-            missingArticles.forEach(article => {
-                rows.push({
-                    'Invoice No.': article['Invoice No.'] || '',
-                    'Invoice Date': article['Invoice Date'] || '',
-                    'Wala Order-No.': article['Wala Order-No.'] || '',
-                    'Delivery No.': article['Delivery No.'] || '',
-                    'Transportation Order': article['Transportation Order'] || '',
-                    'Acc. Regulator': article['Acc. Regulator'] || '',
-                    'Account-No.': article['Account-No.'] || '',
-                    'Your Order No.': article['Your Order No.'] || '',
-                    'BTN-No.': article['BTN-No.'] || '',
-                    'Article-No.': article['Article-No.'],
-                    'Description': article['Description'],
-                    'EAN': article['EAN'] || '',
-                    'PZN': article['PZN'] || '',
-                    'Batch No.': article['Batch No.'],
-                    'Expiry Date': article['Expiry Date'] || '',
-                    'RRP': article['RRP'] || 0,
-                    'Quantity': article['Quantity'],
-                    'Price': article['Price'] || 0,
-                    'Discount': article['Discount'] || 0,
-                    'Unit': article['Unit'] || '',
-                    'Price Net': article['Price Net'] || 0,
-                    'Total': article['Total'] || 0,
-                    'Value for customs purposes': article['Value for customs purposes'] || 0
-                });
-            });
-            
-            return rows;
-        }
-
-        function setupDownloadMissing() {
-            const date = new Date();
-            const dateStr = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
-            setupDownload('downloadMissing', generatedFiles.missing, `PackingList_Articles_Manquants_${dateStr}.xlsx`);
-        }
-
-        // Bouton étape 2 → étape 3
-        document.getElementById('nextStep2').addEventListener('click', function() {
+        document.getElementById('nextStep2').addEventListener('click', () => {
             document.querySelector('[data-tab="step2"]').classList.add('completed');
             switchTab('step3');
         });
 
-        // Vérifier si l'ID de réception est renseigné
-        document.getElementById('receptionId').addEventListener('input', function() {
-            const btn = document.getElementById('generateStep3');
-            btn.disabled = !this.value.trim();
+        document.getElementById('receptionId').addEventListener('input', e => {
+            document.getElementById('generateStep3').disabled = !e.target.value.trim();
         });
 
-        // Génération Réception (Étape 3)
-        document.getElementById('generateStep3').addEventListener('click', function() {
-            const receptionId = document.getElementById('receptionId').value;
+        document.getElementById('generateStep3').addEventListener('click', () => {
+            const rid = document.getElementById('receptionId').value.trim();
+            const reception = packingListData.map(m => {
+                const art = articleMapping[String(getCellValue(m, ['Article-No'])).trim()];
+                if (!art) return null;
+                return {
+                    'ID': rid,
+                    'Opérations/Article': art,
+                    'Opérations/Fait': getCellValue(m, ['Quantity']),
+                    'move_line_ids/lot_name': getCellValue(m, ['Batch'])
+                };
+            }).filter(x => x);
 
-            if (!receptionId) {
-                showStatus('Veuillez renseigner l\'ID de réception', 'error', 'status3');
-                return;
-            }
-
-            document.getElementById('loader3').style.display = 'block';
-            showStatus('Génération du fichier de réception...', 'info', 'status3');
-
-            setTimeout(() => {
-                try {
-                    const receptionData = generateRECEPTION(packingListData, articleMapping, receptionId);
-                    generatedFiles.reception = createExcelFile(receptionData, 'Reception');
-
-                    document.getElementById('loader3').style.display = 'none';
-                    showStatus('Fichier de réception généré avec succès ! ✓', 'success', 'status3');
-                    document.getElementById('downloadSection3').style.display = 'block';
-
-                    setupDownloadReception();
-
-                    // Marquer l'étape 3 comme complétée
-                    document.querySelector('[data-tab="step3"]').classList.add('completed');
-
-                } catch (error) {
-                    document.getElementById('loader3').style.display = 'none';
-                    showStatus('Erreur lors de la génération : ' + error.message, 'error', 'status3');
-                    console.error(error);
-                }
-            }, 500);
+            setupDownload('downloadRECEPTION', reception, 'Import_Reception.xlsx');
+            document.getElementById('downloadSection3').style.display = 'block';
+            showStatus('Fichier réception prêt !', 'success', 'status3');
         });
 
-        function showStatus(message, type, elementId) {
-            const status = document.getElementById(elementId);
-            status.textContent = message;
-            status.className = 'status ' + type;
-            status.style.display = 'block';
-            
-            if (type === 'success' || type === 'info') {
-                setTimeout(() => {
-                    if (type === 'info') return; // Garder les messages info
-                    status.style.display = 'none';
-                }, 3000);
-            }
-        }
-
-        function generateCDE(packingList, mapping, fournisseur) {
-            const cdeRows = [];
-            
-            packingList.forEach((row, index) => {
-                const articleFournisseur = String(row['Article-No.']);
-                const articleInterne = mapping[articleFournisseur];
-                
-                // Les articles manquants sont déjà filtrés avant
-                if (!articleInterne) {
-                    return;
-                }
-
-                const cdeRow = {
-                    'Fournisseur': index === 0 ? fournisseur : '',
-                    'Article': articleInterne,
-                    'Lignes de la commande/Quantité': row['Quantity'],
-                    'Lignes de la commande/Prix unitaire': row['Price Net']
-                };
-                
-                cdeRows.push(cdeRow);
-            });
-
-            return cdeRows;
-        }
-
-        function generateLOT(packingList, mapping) {
-            const lotRows = [];
-            
-            packingList.forEach(row => {
-                const articleFournisseur = String(row['Article-No.']);
-                const articleInterne = mapping[articleFournisseur];
-                
-                // Les articles manquants sont déjà filtrés avant
-                if (!articleInterne) {
-                    return;
-                }
-
-                const batchNo = row['Batch No.'];
-                const expiryDate = row['Expiry Date'];
-                
-                let formattedDate = '';
-                if (expiryDate) {
-                    const date = parseExcelDate(expiryDate);
-                    formattedDate = formatDate(date);
-                }
-
-                const lotRow = {
-                    'ID': `import_lot_${articleInterne}_${batchNo}`,
-                    'Article': articleInterne,
-                    'Lot/numéro de série': batchNo,
-                    'Date de fin de validité': formattedDate
-                };
-                
-                lotRows.push(lotRow);
-            });
-
-            return lotRows;
-        }
-
-        function generateRECEPTION(packingList, mapping, receptionId) {
-            const receptionRows = [];
-            
-            const headerRow = {
-                'ID': receptionId,
-                'Emplacement d\'origine': 'Partners/Vendors',
-                'Emplacement de destination': 'WH/Réception',
-                'Opérations/Article': '',
-                'Opérations/Fait': '',
-                'move_line_ids/lot_name': ''
-            };
-            receptionRows.push(headerRow);
-
-            packingList.forEach(row => {
-                const articleFournisseur = String(row['Article-No.']);
-                const articleInterne = mapping[articleFournisseur];
-                
-                if (!articleInterne) {
-                    return;
-                }
-
-                const productRow = {
-                    'ID': '',
-                    'Emplacement d\'origine': '',
-                    'Emplacement de destination': '',
-                    'Opérations/Article': articleInterne,
-                    'Opérations/Fait': row['Quantity'],
-                    'move_line_ids/lot_name': row['Batch No.']
-                };
-                
-                receptionRows.push(productRow);
-            });
-
-            return receptionRows;
-        }
-
-        function parseExcelDate(excelDate) {
-            if (typeof excelDate === 'number') {
-                const date = new Date((excelDate - 25569) * 86400 * 1000);
-                return date;
-            } else if (typeof excelDate === 'string') {
-                return new Date(excelDate);
-            }
-            return new Date();
-        }
-
-        function formatDate(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function createExcelFile(data, sheetName) {
+        function setupDownload(id, data, name) {
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, sheetName);
-            return XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
-        }
-
-        function setupDownloadCDE() {
-            const date = new Date();
-            const dateStr = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
-            setupDownload('downloadCDE', generatedFiles.cde, `CDE_${dateStr}.xlsx`);
-        }
-
-        function setupDownloadLOT() {
-            const date = new Date();
-            const dateStr = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
-            setupDownload('downloadLOT', generatedFiles.lot, `LOT_${dateStr}.xlsx`);
-        }
-
-        function setupDownloadReception() {
-            const date = new Date();
-            const dateStr = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
-            setupDownload('downloadRECEPTION', generatedFiles.reception, `Reception_${dateStr}.xlsx`);
-        }
-
-        function setupDownload(elementId, fileData, filename) {
-            const element = document.getElementById(elementId);
-            const blob = new Blob([fileData], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            XLSX.utils.book_append_sheet(wb, ws, "Import");
+            const out = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
+            const blob = new Blob([out], {type: 'application/octet-stream'});
             const url = URL.createObjectURL(blob);
-            
-            element.href = url;
-            element.download = filename;
+            const btn = document.getElementById(id);
+            btn.href = url;
+            btn.download = name;
         }
     </script>
 </body>
